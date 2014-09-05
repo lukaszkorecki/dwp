@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+FILE=/tmp/$RANDOM.md
+FILEHTML=/tmp/$RANDOM.html
+
+if [[ -z "$1" ]] ; then
+  logger -s -t DWP "Needs a file!"
+  exit 1
+fi
+
+HEADER=$(cat <<EOF
+<html>
+  <head>
+  <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css'>
+  <style>
+  span.del { color: red ; background-color: silver; text-decoration: line-through }
+  span.add { color: green;background-color: silver;  }
+  div.main { margin: 0 auto ; float: none}
+  </style>
+  </head>
+  <body>
+  <div class='main col-md-6'>
+EOF
+)
+
+CLOSING="</div></body></html>"
+
+git diff --word-diff $1 | tail -n +6  | sed \
+  -e 's/{+/<span class="add">/g'  \
+  -e 's/+}/<\/span>/g'  \
+  -e 's/\[-/<span class="del">/g' \
+  -e 's/-\]/<\/span>/g' > $FILE
+
+
+
+
+markdown $FILE > $FILEHTML
+
+cat <(echo "$HEADER" ) $FILEHTML <(echo "$CLOSING")
+
+rm $FILEHTML $FILE
